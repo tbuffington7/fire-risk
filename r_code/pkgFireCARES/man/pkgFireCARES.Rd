@@ -18,6 +18,15 @@ estimate community risk models and make community risk predictions.
  \code{\link{full_analysis}}: Runs through complete analysis (depending
  on the parameters set).
 
+ \code{\link{refresh_views}}: [This feature has not been implemented yet]
+ Since the underlying data used to create the data sets for this analysis
+ change, and the materialized views this analysis uses do not refresh
+ automatically, this makes sure those views are current before continuing
+ with the analysis.
+
+ \code{\link{fcCluster}}: Builds the cluster assignments for US Counties.
+ So far, this is used exclusively for EMS analysis.
+
  \code{\link{fcSetup}}: Takes data file (either for model estimation or
 prediction) and prepare it for use.
 
@@ -45,6 +54,9 @@ prediction) and prepare it for use.
  \code{\link{fcEstimate}}: Takes output from the \code{\link{fcRun}} routine
  and new data and computes predictions by tract or (for high-risk fires)
  Assessors Parcel.
+
+ \code{\link{fcMerge}}: Takes two or more separate predictions (from \code{\link{fcEstimate}})
+ and combines them according to a rule specified. Primarily used with EMS.
 
  \code{\link{rollUp2Dept}}: Takes output from the \code{\link{fcEstimate}} routine
  sums over census tracts to the department level.
@@ -90,6 +102,14 @@ This section takes you through the basic work flow that will typically
 be followed in using this package. The function \code{\link{full_analysis}}
 automates this process.
 
+\emph{Build county clusters} This is typically done with a call
+to \code{\link{fcCluster}} and (so far) is only relevant to EMS risk.
+Since the underlying data used to build county clusters only changes rarely,
+it should only have to be done once every year or two.
+
+\emph{Refresh the views in the database.} This is typically done with a call
+to \code{\link{refresh_views}} [which is not functional yet!!!!].
+
 \emph{Build the definitions of the models to be estimated.} That will
 typically be done by a call to \code{\link{mass.npt}}, although it could be
 done by calling \code{\link{npt}} directly. Either will leave one or more
@@ -121,6 +141,10 @@ analysis. That occurs through a call to \code{\link{fcSetup}}. Finally,
 compute the predictions based on the selected models. That occurs through
 a call to \code{\link{fcEstimate}}.
 
+\emph{Optionally combine separate predictions into one.} In some cases
+separate predictions apply to different portions of the prediction set.
+A call to \code{\link{fcMerge}} will combine them.
+
 \emph{Optionally, roll the census tract predictions up to the department level.}
 A call to \code{\link{rollUp2Dept}} completes this task.
 }
@@ -140,7 +164,7 @@ ACS tables already on the server.
 
 \section{IMPORTS}{
 
-acs,boot,glmnet,ranger,RPostgreSQL,utils
+acs,boot,glmnet,ranger,RPostgreSQL,utils,cluster,magrittr
 }
 
 \section{SUGGESTS}{
@@ -207,8 +231,8 @@ inputs are identical.
 
 \tabular{lcl}{
 Name    \tab Type    \tab Details\cr
-grp     \tab text    \tab One of 'long' or 'short' This matches 'L' (for
-'long') or 'S' or '0' (for 'short') in the in the \code{models} table.\cr
+grp     \tab text    \tab One of 'L', 'S', '0', or 'C'. This matches the \code{runs}
+column in the \code{models} table.\cr
 tier1   \tab text    \tab This combined with 'tier2' below serve as a name
 for the subset to be evaluated.\cr
 tier2   \tab text    \tab See above.\cr
